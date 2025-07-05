@@ -9,6 +9,12 @@ movement.HEAD = {
     LE = 2,
     BK = 3
 }
+movement.DIR_NAMES = {
+    [0] = "FW",
+    [1] = "RI",
+    [2] = "LE",
+    [3] = "BK"
+}
 movement.heading = movement.HEAD.FW
 
 function movement.forward()
@@ -122,11 +128,27 @@ function movement.turnTo(direction)
             movement.tLeft()
             movement.tLeft()
         elseif movement.heading == movement.HEAD.RI then
-            movement.tLeft()
-        elseif movement.heading == movement.HEAD.LE then
             movement.tRight()
+        elseif movement.heading == movement.HEAD.LE then
+            movement.tLeft()
         end
     end
+end
+
+function movement.moveTo(direction)
+    movement.turnTo(direction)
+    if not movement.forward() then
+        turtle.dig()
+        movement.forward()
+    end
+end
+
+function movement.moveToS(direction)
+    movement.turnTo(direction)
+    if not movement.forwardS() then
+        return false
+    end
+    return true
 end
 
 function movement.go(goalX, goalY, goalZ)
@@ -182,6 +204,16 @@ function movement.go(goalX, goalY, goalZ)
     end
 
     movement.turnTo(movement.HEAD.FW)
+end
+
+function movement.go0()
+    movement.go(0, 0, 0)
+end
+
+function movement.debug()
+    -- print debug info, pos and heading
+    print("Position: (" .. movement.X .. ", " .. movement.Y .. ", " .. movement.Z .. ")")
+    print("Heading: " .. movement.DIR_NAMES[movement.heading])
 end
 
 return movement
