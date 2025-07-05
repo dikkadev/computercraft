@@ -1,195 +1,4 @@
--- ===== MOVEMENT CODE =====
-X = 0 -- forwards/backwards offset
-Y = 0 -- left/right offset; right => + | left => -
-Z = 0 -- up/down offset
-HEAD = {
-    FW = 0,
-    RI = 1,
-    LE = 2,
-    BK = 3
-}
-heading = HEAD.FW
-
-function forward()
-    local didMove = turtle.forward()
-    if not didMove then
-        return false
-    end
-    if heading == HEAD.FW then
-        X = X + 1
-    elseif heading == HEAD.RI then
-        Y = Y + 1
-    elseif heading == HEAD.LE then
-        Y = Y - 1
-    elseif heading == HEAD.BK then
-        X = X - 1
-    end
-    return true
-end
-
-function back(iters)
-    local didMove = turtle.back()
-    if not didMove then
-        return false
-    end
-    if heading == HEAD.FW then
-        X = X - 1
-    elseif heading == HEAD.RI then
-        Y = Y - 1
-    elseif heading == HEAD.LE then
-        Y = Y + 1
-    elseif heading == HEAD.BK then
-        X = X + 1
-    end
-    return true
-end
-
-function up(iters)
-    local didMove = turtle.up()
-    if not didMove then
-        return false
-    end
-    Z = Z + 1
-    return true
-end
-
-function down(iters)
-    local didMove = turtle.down()
-    if not didMove then
-        return false
-    end
-    Z = Z - 1
-    return true
-end
-
-function tLeft()
-    turtle.turnLeft()
-    if heading == HEAD.FW then
-        heading = HEAD.LE
-    elseif heading == HEAD.RI then
-        heading = HEAD.FW
-    elseif heading == HEAD.LE then
-        heading = HEAD.BK
-    elseif heading == HEAD.BK then
-        heading = HEAD.RI
-    end
-end
-
-function tRight()
-    turtle.turnRight()
-    if heading == HEAD.FW then
-        heading = HEAD.RI
-    elseif heading == HEAD.RI then
-        heading = HEAD.BK
-    elseif heading == HEAD.LE then
-        heading = HEAD.FW
-    elseif heading == HEAD.BK then
-        heading = HEAD.LE
-    end
-end
-
-function turnTo(direction)
-    if direction == HEAD.FW then
-        if heading == HEAD.RI then
-            tLeft()
-        elseif heading == HEAD.LE then
-            tRight()
-        elseif heading == HEAD.BK then
-            tLeft()
-            tLeft()
-        end
-    elseif direction == HEAD.RI then
-        if heading == HEAD.FW then
-            tRight()
-        elseif heading == HEAD.LE then
-            tLeft()
-            tLeft()
-        elseif heading == HEAD.BK then
-            tLeft()
-        end
-    elseif direction == HEAD.LE then
-        if heading == HEAD.FW then
-            tLeft()
-        elseif heading == HEAD.RI then
-            tLeft()
-            tLeft()
-        elseif heading == HEAD.BK then
-            tRight()
-        end
-    elseif direction == HEAD.BK then
-        if heading == HEAD.FW then
-            tLeft()
-            tLeft()
-        elseif heading == HEAD.RI then
-            tLeft()
-        elseif heading == HEAD.LE then
-            tRight()
-        end
-    end
-end
-
-function go(goalX, goalY, goalZ)
-    print("Going to " .. goalX .. ", " .. goalY .. ", " .. goalZ)
-    print("Currently at " .. X .. ", " .. Y .. ", " .. Z)
-
-    -- correct x
-    while goalX ~= X do
-        local deltaX = goalX - X
-
-        if deltaX > 0 then
-            goalHeading = HEAD.FW
-        elseif deltaX < 0 then
-            goalHeading = HEAD.BK
-        end
-
-        turnTo(goalHeading)
-
-        -- Move forward to the goal
-        if not forward() then
-            turtle.dig()
-            forward()
-        end
-    end
-
-    while goalY ~= Y do
-        local deltaY = goalY - Y
-
-        if deltaY > 0 then
-            goalHeading = HEAD.RI
-        elseif deltaY < 0 then
-            goalHeading = HEAD.LE
-        end
-
-        turnTo(goalHeading)
-
-        -- Move forward to the goal
-        if not forward() then
-            turtle.dig()
-            forward()
-        end
-    end
-
-    -- goto correct height
-    while Z < goalZ do
-        if not up() then
-            turtle.digUp()
-            up()
-        end
-    end
-
-    while Z > goalZ do
-        if not down() then
-            turtle.digDown()
-            up()
-        end
-    end
-
-    turnTo(HEAD.FW)
-
-end
-
--- ====== MOVEMENT END =====
-
+local mv = require("movement")
 -- Do a single layer (which is actually 2)
 function doLayer()
     for col = 1, width do
@@ -198,26 +7,26 @@ function doLayer()
             turtle.digDown()
             if row ~= length then
                 turtle.dig()
-                forward()
+                mv.forward()
             end
         end
         -- move over
         if col ~= width then
             if col % 2 ~= 0 then
-                tRight()
+                mv.tRight()
             else
-                tLeft()
+                mv.tLeft()
             end
             turtle.dig()
-            forward()
+            mv.forward()
             if col % 2 ~= 0 then
-                tRight()
+                mv.tRight()
             else
-                tLeft()
+                mv.tLeft()
             end
         end
     end
-    go(0, 0, Z)
+    mv.go(0, 0, mv.Z)
 end
 
 -- check how many slots have items in them
@@ -234,8 +43,8 @@ end
 -- deposit items in chest and drop other items
 function depositItems()
     print("Depositing items")
-    go(0, 0, 0)
-    turnTo(HEAD.BK)
+    mv.go(0, 0, 0)
+    mv.turnTo(mv.HEAD.BK)
     for s = 1, 16 do
         -- if item is trash drop_down, else drop
         turtle.select(s)
@@ -254,7 +63,7 @@ function depositItems()
             end
         end
     end
-    turnTo(HEAD.FW)
+    mv.turnTo(mv.HEAD.FW)
 end
 
 trash = {}
@@ -296,20 +105,20 @@ print("Starting quarry " .. length .. "x" .. width .. "x" .. depth)
 
 turtle.select(1)
 turtle.digDown()
-down()
+mv.down()
 
 for layer = 1, depth do
     print("Starting layer " .. layer)
     doLayer()
-    local zAfterLayer = Z
+    local zAfterLayer = mv.Z
     if occupiedSlots() > 11 then
         depositItems()
     end
-    go(0, 0, zAfterLayer)
+    mv.go(0, 0, zAfterLayer)
     if layer ~= depth then
         turtle.digDown()
-        down()
+        mv.down()
         turtle.digDown()
-        down()
+        mv.down()
     end
 end

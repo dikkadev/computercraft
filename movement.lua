@@ -1,194 +1,188 @@
---[[
+local movement = {}
 
-Library code to track turtle movement and go to specific position without GPS
-
-]]--
-
-X = 0 -- forwards/backwards offset
-Y = 0 -- left/right offset; right => + | left => -
-Z = 0 -- up/down offset
-HEAD = {
+movement.X = 0
+movement.Y = 0
+movement.Z = 0
+movement.HEAD = {
     FW = 0,
     RI = 1,
     LE = 2,
     BK = 3
 }
-heading = HEAD.FW
+movement.heading = movement.HEAD.FW
 
-function forward()
+function movement.forward()
     local didMove = turtle.forward()
     if not didMove then
         return false
     end
-    if heading == HEAD.FW then
-        X = X + 1
-    elseif heading == HEAD.RI then
-        Y = Y + 1
-    elseif heading == HEAD.LE then
-        Y = Y - 1
-    elseif heading == HEAD.BK then
-        X = X - 1
+    if movement.heading == movement.HEAD.FW then
+        movement.X = movement.X + 1
+    elseif movement.heading == movement.HEAD.RI then
+        movement.Y = movement.Y + 1
+    elseif movement.heading == movement.HEAD.LE then
+        movement.Y = movement.Y - 1
+    elseif movement.heading == movement.HEAD.BK then
+        movement.X = movement.X - 1
     end
     return true
 end
 
-function back(iters)
+function movement.back()
     local didMove = turtle.back()
     if not didMove then
         return false
     end
-    if heading == HEAD.FW then
-        X = X - 1
-    elseif heading == HEAD.RI then
-        Y = Y - 1
-    elseif heading == HEAD.LE then
-        Y = Y + 1
-    elseif heading == HEAD.BK then
-        X = X + 1
+    if movement.heading == movement.HEAD.FW then
+        movement.X = movement.X - 1
+    elseif movement.heading == movement.HEAD.RI then
+        movement.Y = movement.Y - 1
+    elseif movement.heading == movement.HEAD.LE then
+        movement.Y = movement.Y + 1
+    elseif movement.heading == movement.HEAD.BK then
+        movement.X = movement.X + 1
     end
     return true
 end
 
-function up(iters)
+function movement.up()
     local didMove = turtle.up()
     if not didMove then
         return false
     end
-    Z = Z + 1
+    movement.Z = movement.Z + 1
     return true
 end
 
-function down(iters)
+function movement.down()
     local didMove = turtle.down()
     if not didMove then
         return false
     end
-    Z = Z - 1
+    movement.Z = movement.Z - 1
     return true
 end
 
-function tLeft()
+function movement.tLeft()
     turtle.turnLeft()
-    if heading == HEAD.FW then
-        heading = HEAD.LE
-    elseif heading == HEAD.RI then
-        heading = HEAD.FW
-    elseif heading == HEAD.LE then
-        heading = HEAD.BK
-    elseif heading == HEAD.BK then
-        heading = HEAD.RI
+    if movement.heading == movement.HEAD.FW then
+        movement.heading = movement.HEAD.LE
+    elseif movement.heading == movement.HEAD.RI then
+        movement.heading = movement.HEAD.FW
+    elseif movement.heading == movement.HEAD.LE then
+        movement.heading = movement.HEAD.BK
+    elseif movement.heading == movement.HEAD.BK then
+        movement.heading = movement.HEAD.RI
     end
 end
 
-function tRight()
+function movement.tRight()
     turtle.turnRight()
-    if heading == HEAD.FW then
-        heading = HEAD.RI
-    elseif heading == HEAD.RI then
-        heading = HEAD.BK
-    elseif heading == HEAD.LE then
-        heading = HEAD.FW
-    elseif heading == HEAD.BK then
-        heading = HEAD.LE
+    if movement.heading == movement.HEAD.FW then
+        movement.heading = movement.HEAD.RI
+    elseif movement.heading == movement.HEAD.RI then
+        movement.heading = movement.HEAD.BK
+    elseif movement.heading == movement.HEAD.LE then
+        movement.heading = movement.HEAD.FW
+    elseif movement.heading == movement.HEAD.BK then
+        movement.heading = movement.HEAD.LE
     end
 end
 
-function turnTo(direction)
-    if direction == HEAD.FW then
-        if heading == HEAD.RI then
-            tLeft()
-        elseif heading == HEAD.LE then
-            tRight()
-        elseif heading == HEAD.BK then
-            tLeft()
-            tLeft()
+function movement.turnTo(direction)
+    if direction == movement.HEAD.FW then
+        if movement.heading == movement.HEAD.RI then
+            movement.tLeft()
+        elseif movement.heading == movement.HEAD.LE then
+            movement.tRight()
+        elseif movement.heading == movement.HEAD.BK then
+            movement.tLeft()
+            movement.tLeft()
         end
-    elseif direction == HEAD.RI then
-        if heading == HEAD.FW then
-            tRight()
-        elseif heading == HEAD.LE then
-            tLeft()
-            tLeft()
-        elseif heading == HEAD.BK then
-            tLeft()
+    elseif direction == movement.HEAD.RI then
+        if movement.heading == movement.HEAD.FW then
+            movement.tRight()
+        elseif movement.heading == movement.HEAD.LE then
+            movement.tLeft()
+            movement.tLeft()
+        elseif movement.heading == movement.HEAD.BK then
+            movement.tLeft()
         end
-    elseif direction == HEAD.LE then
-        if heading == HEAD.FW then
-            tLeft()
-        elseif heading == HEAD.RI then
-            tLeft()
-            tLeft()
-        elseif heading == HEAD.BK then
-            tRight()
+    elseif direction == movement.HEAD.LE then
+        if movement.heading == movement.HEAD.FW then
+            movement.tLeft()
+        elseif movement.heading == movement.HEAD.RI then
+            movement.tLeft()
+            movement.tLeft()
+        elseif movement.heading == movement.HEAD.BK then
+            movement.tRight()
         end
-    elseif direction == HEAD.BK then
-        if heading == HEAD.FW then
-            tLeft()
-            tLeft()
-        elseif heading == HEAD.RI then
-            tLeft()
-        elseif heading == HEAD.LE then
-            tRight()
+    elseif direction == movement.HEAD.BK then
+        if movement.heading == movement.HEAD.FW then
+            movement.tLeft()
+            movement.tLeft()
+        elseif movement.heading == movement.HEAD.RI then
+            movement.tLeft()
+        elseif movement.heading == movement.HEAD.LE then
+            movement.tRight()
         end
     end
 end
 
-function go(goalX, goalY, goalZ)
+function movement.go(goalX, goalY, goalZ)
     print("Going to " .. goalX .. ", " .. goalY .. ", " .. goalZ)
-    print("Currently at " .. X .. ", " .. Y .. ", " .. Z)
+    print("Currently at " .. movement.X .. ", " .. movement.Y .. ", " .. movement.Z)
 
-    -- correct x
-    while goalX ~= X do
-        local deltaX = goalX - X
+    while goalX ~= movement.X do
+        local deltaX = goalX - movement.X
 
         if deltaX > 0 then
-            goalHeading = HEAD.FW
+            goalHeading = movement.HEAD.FW
         elseif deltaX < 0 then
-            goalHeading = HEAD.BK
+            goalHeading = movement.HEAD.BK
         end
 
-        turnTo(goalHeading)
+        movement.turnTo(goalHeading)
 
-        -- Move forward to the goal
-        if not forward() then
+        if not movement.forward() then
             turtle.dig()
-            forward()
+            movement.forward()
         end
     end
 
-    while goalY ~= Y do
-        local deltaY = goalY - Y
+    while goalY ~= movement.Y do
+        local deltaY = goalY - movement.Y
 
         if deltaY > 0 then
-            goalHeading = HEAD.RI
+            goalHeading = movement.HEAD.RI
         elseif deltaY < 0 then
-            goalHeading = HEAD.LE
+            goalHeading = movement.HEAD.LE
         end
 
-        turnTo(goalHeading)
+        movement.turnTo(goalHeading)
 
-        -- Move forward to the goal
-        if not forward() then
+        if not movement.forward() then
             turtle.dig()
-            forward()
+            movement.forward()
         end
     end
 
-    -- goto correct height
-    while Z < goalZ do
-        if not up() then
+    while movement.Z < goalZ do
+        if not movement.up() then
             turtle.digUp()
-            up()
+            movement.up()
         end
     end
 
-    while Z > goalZ do
-        if not down() then
+    while movement.Z > goalZ do
+        if not movement.down() then
             turtle.digDown()
-            up()
+            movement.up()
         end
     end
 
-    turnTo(HEAD.FW)
-
+    movement.turnTo(movement.HEAD.FW)
 end
+
+return movement
+
