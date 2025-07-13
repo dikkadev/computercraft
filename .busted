@@ -1,0 +1,10 @@
+return {
+    default = {
+        output = "utfTerminal",
+        pattern = "_spec",
+        ROOT = {"spec/"},
+        lpath = "lib/?.lua;test/?.lua;test/?/init.lua",
+        verbose = true,
+        coverage = false
+    }
+}
