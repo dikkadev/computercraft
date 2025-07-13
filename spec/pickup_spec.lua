@@ -7,7 +7,17 @@ describe("Pickup Library", function()
     before_each(function()
         mock_turtle, mock_os = test_utils.setup_mocks()
         pickup = require("lib.pickup")
+        
+        -- Reset pickup configuration
         pickup.setReturnHome(false)
+        pickup.setCollectionFunction(nil)
+        
+        -- Reset movement state
+        local movement = require("lib.movement")
+        movement.X = 0
+        movement.Y = 0
+        movement.Z = 0
+        movement.heading = movement.HEAD.FW
     end)
     
     describe("Configuration", function()

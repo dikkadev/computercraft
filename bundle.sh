@@ -38,6 +38,9 @@ archive_existing_bundle() {
     local bundle_file="${BUNDLES_DIR}/${script_name}_bundled.lua"
     
     if [ -f "$bundle_file" ]; then
+        # Ensure archive directory exists
+        mkdir -p "$ARCHIVE_DIR"
+        
         local timestamp=$(date +"%Y%m%d_%H%M%S")
         local archive_name="${script_name}_bundled_${timestamp}.lua.gz"
         local archive_path="${ARCHIVE_DIR}/${archive_name}"
@@ -108,12 +111,13 @@ EOF
             
             echo "-- --- DEPENDENCY: $dep.lua ---" >> "$bundle_file"
             
-            # Process the dependency file to handle its own requires
+            # Process the dependency file to handle its own requires and returns
             if [ "$dep" = "pickup" ]; then
                 # Special handling for pickup.lua which requires movement
-                sed 's/local mv = require("lib\.movement")/local mv = movement/g' "$dep_file" >> "$bundle_file"
+                sed 's/local mv = require("lib\.movement")/local mv = movement/g; s/return pickup//g' "$dep_file" >> "$bundle_file"
             else
-                cat "$dep_file" >> "$bundle_file"
+                # Remove return statement from dependencies
+                sed '/^return[[:space:]]\+[[:alnum:]_]\+/d' "$dep_file" >> "$bundle_file"
             fi
             
             echo "" >> "$bundle_file"
@@ -132,7 +136,7 @@ EOF
     
     for dep in "${deps[@]}"; do
         # Replace require calls with direct references
-        processed_script=$(echo "$processed_script" | sed "s/require(\"lib\\.$dep\")/\$dep/g")
+        processed_script=$(echo "$processed_script" | sed "s/require(\"lib\\.$dep\")/$dep/g")
         processed_script=$(echo "$processed_script" | sed "s/require(\"$dep\")/$dep/g")
     done
     

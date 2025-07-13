@@ -151,7 +151,7 @@ function movement.moveToS(direction)
     return true
 end
 
-function movement.go(goalX, goalY, goalZ)
+function movement.go(goalX, goalY, goalZ, stepExtraFunc)
     print("Going to " .. goalX .. ", " .. goalY .. ", " .. goalZ)
     print("Currently at " .. movement.X .. ", " .. movement.Y .. ", " .. movement.Z)
 
@@ -169,6 +169,9 @@ function movement.go(goalX, goalY, goalZ)
         if not movement.forward() then
             turtle.dig()
             movement.forward()
+            if stepExtraFunc then
+                stepExtraFunc()
+            end
         end
     end
 
@@ -186,6 +189,9 @@ function movement.go(goalX, goalY, goalZ)
         if not movement.forward() then
             turtle.dig()
             movement.forward()
+            if stepExtraFunc then
+                stepExtraFunc()
+            end
         end
     end
 
@@ -193,6 +199,9 @@ function movement.go(goalX, goalY, goalZ)
         if not movement.up() then
             turtle.digUp()
             movement.up()
+            if stepExtraFunc then
+                stepExtraFunc()
+            end
         end
     end
 
@@ -200,6 +209,9 @@ function movement.go(goalX, goalY, goalZ)
         if not movement.down() then
             turtle.digDown()
             movement.down()
+            if stepExtraFunc then
+                stepExtraFunc()
+            end
         end
     end
 

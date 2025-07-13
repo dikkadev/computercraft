@@ -8,6 +8,16 @@ describe("Integration Tests", function()
         mock_turtle, mock_os = test_utils.setup_mocks()
         movement = require("lib.movement")
         pickup = require("lib.pickup")
+        
+        -- Reset movement state
+        movement.X = 0
+        movement.Y = 0
+        movement.Z = 0
+        movement.heading = movement.HEAD.FW
+        
+        -- Reset pickup configuration
+        pickup.setReturnHome(false)
+        pickup.setCollectionFunction(nil)
     end)
     
     describe("Movement + Pickup Integration", function()

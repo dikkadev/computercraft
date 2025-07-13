@@ -7,6 +7,16 @@ function test_utils.setup_mocks()
     _G.turtle = mock_turtle
     _G.os = setmetatable(mock_os, {__index = _G.os})
     
+    -- Mock other ComputerCraft APIs
+    _G.term = {
+        clear = function() end,
+        setCursorPos = function() end,
+        write = function() end
+    }
+    
+    _G.read = function() return "" end
+    _G.tonumber = tonumber
+    
     mock_turtle.reset()
     mock_os.reset()
     
@@ -46,6 +56,7 @@ end
 
 function test_utils.assert_position_equals(expected_x, expected_y, expected_z, actual_position, message)
     message = message or "Position mismatch"
+    local assert = require("luassert")
     assert.equals(expected_x, actual_position.X, message .. " (X coordinate)")
     assert.equals(expected_y, actual_position.Y, message .. " (Y coordinate)")
     assert.equals(expected_z, actual_position.Z, message .. " (Z coordinate)")
@@ -53,6 +64,7 @@ end
 
 function test_utils.assert_heading_equals(expected_heading, actual_heading, message)
     message = message or "Heading mismatch"
+    local assert = require("luassert")
     assert.equals(expected_heading, actual_heading, message)
 end
 

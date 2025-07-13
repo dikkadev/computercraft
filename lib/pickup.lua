@@ -21,6 +21,17 @@ local function defaultCollectionFunction()
     turtle.suckDown()
 end
 
+local function deepCollect()
+    for i = 1, 4 do
+        turtle.suck()      -- front
+        turtle.suckUp()    -- above
+        turtle.suckDown()  -- below
+        mv.tRight()        -- rotate to next side
+    end
+    -- restore heading to forward
+    mv.tLeft()
+end
+
 local function collectAtPosition()
     if pickup.config.collection_function then
         pickup.config.collection_function()
@@ -29,102 +40,116 @@ local function collectAtPosition()
     end
 end
 
+local function suckForward()
+    turtle.suck()
+    turtle.suckUp()
+    turtle.suckDown()
+end
+
 function pickup.spiral(radius, startX, startY)
     startX = startX or 0
     startY = startY or 0
-    
-    local positions = {}
+
     local homeX, homeY, homeZ = mv.X, mv.Y, mv.Z
-    
+    local positions = {}
+
+    -- go to center once
     mv.go(startX, startY, mv.Z)
-    table.insert(positions, {startX, startY})
-    collectAtPosition()
-    
+    table.insert(positions, {mv.X, mv.Y})
+    suckForward()
+
     if radius <= 0 then
-        if pickup.config.return_home then
-            mv.go(homeX, homeY, homeZ)
-        end
+        if pickup.config.return_home then mv.go(homeX, homeY, homeZ) end
         return positions
     end
-    
-    local x, y = startX, startY
-    local dx, dy = 1, 0
-    local steps = 1
-    local step_count = 0
-    local direction_changes = 0
-    
-    while direction_changes < radius * 2 do
-        for i = 1, steps do
-            x = x + dx
-            y = y + dy
-            
-            mv.go(x, y, mv.Z)
-            table.insert(positions, {x, y})
-            collectAtPosition()
-            
-            step_count = step_count + 1
-            if step_count >= (2 * radius + 1) * (2 * radius + 1) - 1 then
-                break
-            end
+
+    local dirs = { mv.HEAD.FW, mv.HEAD.RI, mv.HEAD.BK, mv.HEAD.LE }
+    local dirIdx = 1
+    local stepLen = 1
+    local totalLegs = radius * 2
+
+    for leg = 1, totalLegs do
+        local legDir = dirs[dirIdx]
+        -- the “outward” side is the next direction in the spiral
+        local outDir = dirs[(dirIdx % #dirs) + 1]
+
+        mv.turnTo(legDir)
+        for i = 1, stepLen do
+            mv.forward()
+            table.insert(positions, {mv.X, mv.Y})
+
+            -- collect in front
+            suckForward()
+            -- swing out once
+            mv.turnTo(outDir)
+            suckForward()
+            -- restore heading
+            mv.turnTo(legDir)
         end
-        
-        if step_count >= (2 * radius + 1) * (2 * radius + 1) - 1 then
-            break
-        end
-        
-        if dx == 1 and dy == 0 then
-            dx, dy = 0, 1
-        elseif dx == 0 and dy == 1 then
-            dx, dy = -1, 0
-            steps = steps + 1
-        elseif dx == -1 and dy == 0 then
-            dx, dy = 0, -1
-        elseif dx == 0 and dy == -1 then
-            dx, dy = 1, 0
-            steps = steps + 1
-        end
-        
-        direction_changes = direction_changes + 1
+
+        -- next leg
+        dirIdx = dirIdx % #dirs + 1
+        if leg % 2 == 0 then stepLen = stepLen + 1 end
     end
-    
-    if pickup.config.return_home then
-        mv.go(homeX, homeY, homeZ)
-    end
-    
+
+    if pickup.config.return_home then mv.go(homeX, homeY, homeZ) end
     return positions
 end
 
-function pickup.grid(width, height, startX, startY)
-    startX = startX or 0
-    startY = startY or 0
-    
-    local positions = {}
+--- Covers every integer (x,y) in the rectangle between (x1,y1) and (x2,y2).
+--  If any mv.forward() fails, aborts and returns home immediately.
+--  Returns list of positions visited.
+function pickup.grid(x1, y1, x2, y2)
+    -- determine bounds
+    local minX, maxX = math.min(x1, x2), math.max(x1, x2)
+    local minY, maxY = math.min(y1, y2), math.max(y1, y2)
+
+    -- remember home
     local homeX, homeY, homeZ = mv.X, mv.Y, mv.Z
-    
+    local positions = {}
+
+    -- jump to start corner once
+    mv.go(minX, minY, mv.Z, suckForward)
+    table.insert(positions, {mv.X, mv.Y})
+    suckForward()
+
+    -- height and width
+    local width  = maxX - minX + 1
+    local height = maxY - minY + 1
+
     for row = 0, height - 1 do
-        local y = startY + row
-        
-        if row % 2 == 0 then
-            for col = 0, width - 1 do
-                local x = startX + col
-                mv.go(x, y, mv.Z)
-                table.insert(positions, {x, y})
-                collectAtPosition()
+        local y = minY + row
+        -- decide direction this row (even=row → east, odd=row → west)
+        local facing = (row % 2 == 0) and mv.HEAD.FW or mv.HEAD.BK
+        mv.turnTo(facing)
+
+        -- how many steps to take in X (minus the one we're already on)
+        local steps = width - 1
+        for i = 1, steps do
+            if not mv.forward() then
+                -- blocked: go home and bail
+                mv.go(homeX, homeY, homeZ)
+                return positions
             end
-        else
-            for col = width - 1, 0, -1 do
-                local x = startX + col
-                mv.go(x, y, mv.Z)
-                table.insert(positions, {x, y})
-                collectAtPosition()
+            table.insert(positions, {mv.X, mv.Y})
+            suckForward()
+        end
+
+        -- at end of row, if there's another row, move north one
+        if row < height - 1 then
+            mv.turnTo(mv.HEAD.RI)  -- north
+            if not mv.forward() then
+                mv.go(homeX, homeY, homeZ)
+                return positions
             end
+            table.insert(positions, {mv.X, mv.Y})
+            suckForward()
         end
     end
-    
+
     if pickup.config.return_home then
         mv.go(homeX, homeY, homeZ)
     end
-    
     return positions
 end
 
